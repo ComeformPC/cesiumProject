@@ -1,0 +1,33 @@
+{
+  "name": "cesiumproject",
+  "version": "1.0.0",
+  "description": "cesium模型展示系统",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ComeformPC/cesiumProject.git"
+  },
+  "keywords": [
+    "cesium"
+  ],
+  "author": "ls",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ComeformPC/cesiumProject/issues"
+  },
+  "homepage": "https://github.com/ComeformPC/cesiumProject#readme",
+  "dependencies": {
+    "cesium": "^1.70.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.26.7",
+    "gulp": "^4.0.2",
+    "gulp-clean": "^0.4.0",
+    "gulp-sass": "^4.1.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "typescript": "^3.9.3"
+  }
+}

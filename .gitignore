@@ -1,0 +1,6 @@
+# Node.js安装的模块
+node_modules/
+# 模型文件
+src/data/
+# 编译后文件
+dist/
