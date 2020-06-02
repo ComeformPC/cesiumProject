@@ -1,0 +1,19 @@
+{
+    "include": [
+        "src/**/*.ts",
+        "typings/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ],
+    "compilerOptions": {
+        "allowJs": true,
+        "module": "amd",
+        "sourceMap": false,
+        "target": "es5",
+        "noImplicitAny": false,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "rootDir": "./src",//根目录
+    }
+}
