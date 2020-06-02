@@ -4,3 +4,5 @@ node_modules/
 src/data/
 # 编译后文件
 dist/
+package-lock.json
+
