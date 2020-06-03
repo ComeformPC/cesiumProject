@@ -58,7 +58,7 @@ function sassStyle(cb){
 function serve(cb){
     browser.init({
         server:{
-            baseDir:'./dist'
+            baseDir:['./dist','./libs','./data']
         },
         notify:false
     });

@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build":"gulp build",
-    "start":"gulp server"
+    "build": "gulp build",
+    "start": "gulp server",
+    "obj2gltf":"obj2gltf -i data/tf/obj/ground.obj -o data/tf/obj/ground.glb"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
   },
   "homepage": "https://github.com/ComeformPC/cesiumProject#readme",
   "dependencies": {
+    "@types/cesium": "^1.67.10",
     "cesium": "^1.70.0",
     "requirejs": "^2.3.6"
   },
@@ -31,6 +33,7 @@
     "gulp-clean": "^0.4.0",
     "gulp-sass": "^4.1.0",
     "gulp-typescript": "^3.2.4",
+    "obj2gltf": "^3.1.0",
     "typescript": "^3.9.3"
   }
 }
