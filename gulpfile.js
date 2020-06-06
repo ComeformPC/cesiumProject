@@ -4,6 +4,8 @@ const sass=require("gulp-sass");
 const browser=require("browser-sync").create();
 const ts=require("gulp-typescript");
 const tsConfig=ts.createProject("tsconfig.json");
+const gltfPipeline=require("gltf-pipeline");
+const fsExtra=require('fs-extra');
 /**
  * 清空dist
  */
@@ -80,5 +82,44 @@ function serverwatch(cb){
     watch("src/**/*.html",series(html,reload));
     cb();
 }
+/**
+ * 简化gltf网格
+ */
+function dracoCompress(cb){
+    const array=["medium","low"];
+    const level=[7,10];
+    for(let i=0;i<array.length;i++){
+        const name=array[i];
+        const gltf=fsExtra.readJSONSync("./data/tf/gltf/ground.gltf");
+        gltfPipeline.processGltf(gltf,{
+            resourceDirectory:"./data/tf/gltf",
+            separate:true,
+            dracoOptions: {
+                compressionLevel: level[i]
+            }
+        }).then(function(results){
+            fsExtra.writeJSONSync("./data/tf/gltf/"+name+"/ground-"+name+".gltf",results.gltf);
+            //save separateResources
+            const resources=results.separateResources;
+            for(const resource in resources){
+                const buffer=resources[resource];
+                fsExtra.writeFileSync("./data/tf/gltf/"+name+"/"+resource,buffer);
+            }
+        });
+    }
+    //mediump
+    // gltfPipeline.processGltf(gltf,{
+    //     resourceDirectory:"./data/tf/gltf",
+    //        separate:true,
+    //     dracoOptions: {
+    //         compressionLevel: 7
+    //     }
+    // }).then(function(results){
+    //     fsExtra.writeJSONSync("./data/tf/gltf/ground-medium.gltf",results.gltf);
+    // });
+    //low
+    cb();
+}
+exports.draco=dracoCompress;
 exports.build=series(clean,typescript,sassStyle,copy);
 exports.server=series(serve,serverwatch);

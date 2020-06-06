@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "gulp build",
     "start": "gulp server",
-    "obj2gltf":"obj2gltf -i data/tf/obj/ground.obj -o data/tf/obj/ground.glb"
+    "obj2gltf": "obj2gltf -i data/tf/obj/ground.obj -o data/tf/obj/ground.glb",
+    "draco": "gulp draco"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,8 @@
   },
   "devDependencies": {
     "browser-sync": "^2.26.7",
+    "fs-extra": "^9.0.1",
+    "gltf-pipeline": "^2.1.10",
     "gulp": "^4.0.2",
     "gulp-clean": "^0.4.0",
     "gulp-sass": "^4.1.0",

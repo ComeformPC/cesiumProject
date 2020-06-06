@@ -17,7 +17,7 @@ class addGLTF {
             fixedFrameTransform
         );
         const tileset:Cesium.Model = viewer.scene.primitives.add(Cesium.Model.fromGltf({
-            url: "./tf/obj/ground.gltf",
+            url: "./tf/gltf/ground.gltf",
             modelMatrix:modelMatrix,
             debugShowBoundingVolume:false
         }));

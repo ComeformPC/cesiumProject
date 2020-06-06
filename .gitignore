@@ -4,5 +4,6 @@ node_modules/
 data/tf
 # 编译后文件
 dist/
+log/
 package-lock.json
 
