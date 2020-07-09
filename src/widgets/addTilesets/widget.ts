@@ -21,10 +21,10 @@ class addGLTF {
             fixedFrameTransform
         );
         const tileset:Cesium.Cesium3DTileset = viewer.scene.primitives.add(new Cesium.Cesium3DTileset({
-            url:"./tilesets/ground/tileset.json"
+            url:"./tilesets/guju/tileset.json"
         }));
         tileset.readyPromise.then(function(){
-            tileset.modelMatrix=modelMatrix;
+            //tileset.modelMatrix=modelMatrix;
             viewer.zoomTo(tileset);
         })
         viewer.extend(Cesium.viewerCesium3DTilesInspectorMixin);
