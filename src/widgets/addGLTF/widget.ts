@@ -1,6 +1,6 @@
-
+import Cesium from 'cesium';
 class addGLTF {
-    constructor(id) {
+    constructor(id:string) {
         this.id = id;
     }
     id: string
@@ -29,4 +29,4 @@ class addGLTF {
         
     }
 }
-export =addGLTF;
+export default addGLTF;

@@ -1,6 +1,6 @@
-
+import Cesium from 'cesium';
 class baseViewer{
-    constructor(id){
+    constructor(id:string){
         this.id=id;
     }
     id:string
@@ -13,4 +13,4 @@ class baseViewer{
         viewer.zoomTo(tileset);
     }
 }
-export=baseViewer;
+export default baseViewer;
