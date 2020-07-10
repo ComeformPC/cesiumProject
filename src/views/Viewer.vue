@@ -3,7 +3,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import {Ion,Viewer} from 'cesium';
+import {Ion,Viewer, createWorldTerrain} from 'cesium';
 import 'cesium/Source/Widgets/widgets.css';
 export default Vue.extend({
   data() {
@@ -19,7 +19,11 @@ export default Vue.extend({
       Ion.defaultAccessToken =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI1ODRiY2NiYi1jMmVlLTRkNTctYTNhNy03ZGNlMGQ2YmNjZTQiLCJpZCI6MTQwMDIsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NjQ1NTU1MDV9.6E9-n__jfDwX1e-C3H685NhJZ8HUx3BQ7FYEJ9Rz9Ec";
       const viewer = new Viewer("viewer");
+      viewer.scene.screenSpaceCameraController.enableCollisionDetection=false;
+      viewer.scene.globe.depthTestAgainstTerrain=true;
       this.viewer=viewer as any;
+      this.$store.commit('ACTIVE_VIEWER',viewer);
+      
     }
   }
 });

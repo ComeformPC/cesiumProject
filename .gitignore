@@ -1,7 +1,7 @@
 # Node.js安装的模块
 node_modules/
 # 模型文件
-data/tf
+public/data/tf
 # 编译后文件
 dist/
 log/
