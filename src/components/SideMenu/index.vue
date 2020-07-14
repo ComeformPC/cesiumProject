@@ -11,14 +11,12 @@
       <el-submenu index="2-1">
         <template slot="title">glTF</template>
         <el-menu-item index="2-1-1" @click="addglTF('CesiumMan')">CesiumMan</el-menu-item>
-        <el-menu-item index="2-1-2" @click="addglTF('Car')">Car</el-menu-item>
-        <el-menu-item index="2-1-3" @click="addglTF('Plane')">Plane</el-menu-item>
+        <el-menu-item index="2-1-2" @click="addglTF('Architecture')">建筑</el-menu-item>
       </el-submenu>
       <el-submenu index="2-2">
         <template slot="title">3dTiles</template>
-        <el-menu-item index="2-2-1" @click="add3dtiles('dragon')">龙</el-menu-item>
-        <el-menu-item index="2-2-2" @click="add3dtiles('ground')">地面</el-menu-item>
-        <el-menu-item index="2-2-3" @click="add3dtiles('lod')">Lod</el-menu-item>
+        <el-menu-item index="2-2-1" @click="add3dtiles('Dragon')">龙</el-menu-item>
+        <el-menu-item index="2-2-3" @click="add3dtiles('Architecture')">建筑</el-menu-item>
       </el-submenu>
     </el-submenu>
   </el-menu>
@@ -39,41 +37,42 @@ export default Vue.extend({
   },
   mounted(){
     this.viewer=this.$store.state.viewer;
-    console.log(this.$store.state.viewer);
   },
   methods: {
-    zoomIn() {
+    zoomIn() {//放大
       const sceneView = new SceneView(this.viewer);
       sceneView.zoomIn();
     },
-    zoomOut() {
+    zoomOut() {//缩小
       const sceneView = new SceneView(this.viewer);
       sceneView.zoomOut();
     },
-    home() {
+    home() {//全球视野
       const sceneView = new SceneView(this.viewer);
       sceneView.home();
     },
-    add3dtiles(name: string) {
-      console.log(this.viewer);
+    add3dtiles(name: string) {//加载3d-tiles
       const tilesetLoader = new Add3dTiles(this.viewer);
       let url = "";
       switch (name) {
-        case "dragon":
+        case "Dragon":
           url = "./data/tilesets/TilesetWithDiscreteLOD/tileset.json";
           break;
-        case "ground":
-          url = "./data/tilesets/ground/tileset.json";
+        case "Architecture":
+           url = "./data/tilesets/architecture/tileset.json";
           break;
       }
       tilesetLoader.add(url);
     },
-    addglTF(name: string) {
+    addglTF(name: string) {//加载gltf模型
       const gltfLoader = new AddGlTF(this.viewer);
       let url = "";
       switch (name) {
         case "CesiumMan":
-          url = "./data/tf/gltf/ground.gltf";
+          url = "./data/model/CesiumMan/Cesium_Man.gltf";
+          break;
+          case "Architecture":
+          url="./data/model/chateau_de_montfa_81_gltf/origin/scene-origin.gltf";
           break;
       }
       gltfLoader.add(url);

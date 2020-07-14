@@ -3,7 +3,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import {Ion,Viewer, createWorldTerrain} from 'cesium';
+import {Ion,Viewer, createWorldTerrain, JulianDate} from 'cesium';
 import 'cesium/Source/Widgets/widgets.css';
 export default Vue.extend({
   data() {
@@ -21,9 +21,16 @@ export default Vue.extend({
       const viewer = new Viewer("viewer");
       viewer.scene.screenSpaceCameraController.enableCollisionDetection=false;
       viewer.scene.globe.depthTestAgainstTerrain=true;
+      viewer.scene.globe.enableLighting=false;
       this.viewer=viewer as any;
       this.$store.commit('ACTIVE_VIEWER',viewer);
-      
+      this.systemTime(viewer);
+    },
+    systemTime(viewer:Viewer){//设置系统时间为中午12点
+      const time=new Date(Date.now());
+      time.setUTCHours(12);
+      const juli=JulianDate.fromDate(time);
+      viewer.clock.currentTime=juli;
     }
   }
 });

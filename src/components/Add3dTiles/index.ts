@@ -1,4 +1,4 @@
-import { Viewer, Cesium3DTileset, Cartesian3, Transforms, HeadingPitchRoll, Ellipsoid, viewerCesium3DTilesInspectorMixin } from "cesium";
+import { Viewer, Cesium3DTileset, viewerCesium3DTilesInspectorMixin } from "cesium";
 
 /**
  * 添加3dtiles
@@ -22,16 +22,7 @@ class Add3dTiles{
      * @param url .json地址
      */
     add(url:string){
-        const origin = Cartesian3.fromDegrees(-95.0, 40.0, 0.0);
-        const fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator("north", "west");
-        const hpRoll = new HeadingPitchRoll(0, 0, 0);
-        const modelMatrix = Transforms.headingPitchRollToFixedFrame(
-            origin,
-            hpRoll,
-            Ellipsoid.WGS84,
-            fixedFrameTransform
-        );
-        console.log(modelMatrix);
+        this.clear();
         const tileset=this.viewer.scene.primitives.add(new Cesium3DTileset({
             backFaceCulling:false,//禁用背面剔除
             url:url
@@ -41,7 +32,22 @@ class Add3dTiles{
         tileset.readyPromise.then(function(){
             viewer.zoomTo(tileset);
         })
-        this.viewer.extend(viewerCesium3DTilesInspectorMixin);
+        if(!(this.viewer as any).cesium3DTilesInspector){
+            this.viewer.extend(viewerCesium3DTilesInspectorMixin);
+        }
+    }
+    /**
+     * 移出场景中的tilesets
+     */
+    clear(){
+        const len=this.viewer.scene.primitives.length;//scene中图元数量
+        const collection=this.viewer.scene.primitives;
+        for(let i=0;i<len;i++){//删除全部tilesets
+            const primitive=collection.get(i);
+            if(primitive instanceof Cesium3DTileset){
+                collection.remove(primitive);
+            }
+        }
     }
     /**
      * 从场景中移出
