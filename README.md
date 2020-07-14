@@ -3,3 +3,9 @@
 cesium模型展示系统<br/>
 <hr/>
 理清3dmax模型转换为gltf、3d-tiles的流程
+## start
+``` shell
+npm install
+npm run serve
+``` shell
+
