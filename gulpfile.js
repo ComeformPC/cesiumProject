@@ -18,11 +18,11 @@ function clean(){
     //cb();//异步任务执行完成回调函数，当函数不返回内容时必须使用；
 }
 /**
- * 简化gltf网格
+ * 压缩gltf几何数据
  */
 function dracoCompress(cb){
     const array=["origin","medium","low"];
-    const level=[7,7,7];
+    const level=[7,7,7];//压缩级别
     for(let i=0;i<array.length;i++){
         const name=array[i];
         const gltf=fsExtra.readJSONSync(config.model+"/"+config.Architecture+"/"+name+"/scene-"+name+".gltf");
