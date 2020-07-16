@@ -19,6 +19,16 @@
         <el-menu-item index="2-2-3" @click="add3dtiles('Architecture')">建筑</el-menu-item>
       </el-submenu>
     </el-submenu>
+    <el-submenu index="3">
+      <template slot="title">primitives</template>
+      <el-menu-item index="3-1" @click="addPrimitive('box')">盒子</el-menu-item>
+      <el-submenu index="3-2">
+        <template slot="title">自定义</template>
+        <el-menu-item index="3-2-1" @click="addPrimitive('custom-color')">纯色纹理</el-menu-item>
+        <el-menu-item index="3-2-2" @click="addPrimitive('custom-img')">图片纹理</el-menu-item>
+      </el-submenu>
+      <el-menu-item index="3-3">材质</el-menu-item>
+    </el-submenu>
   </el-menu>
 </template>
 <script lang="ts">
@@ -26,6 +36,7 @@ import Vue from "vue";
 import SceneView from "@/components/SceneView/index";
 import AddGlTF from "@/components/AddGlTF/index";
 import Add3dTiles from "@/components/Add3dTiles/index";
+import AddPrimitive from "@/components/AddPrimitive/index";
 import { Viewer } from 'cesium';
 export default Vue.extend({
   data():{
@@ -76,6 +87,20 @@ export default Vue.extend({
           break;
       }
       gltfLoader.add(url);
+    },
+    addPrimitive(name:string){//添加primitive图元
+    const primitiveLoader=new AddPrimitive(this.viewer);
+      switch(name){
+        case "box":
+          primitiveLoader.addBox();
+          break;
+          case "custom-color":
+            primitiveLoader.customRectangle();
+            break;
+            case "custom-img":
+            primitiveLoader.customMaterial();
+            break;
+      }
     }
   }
 });
