@@ -27,7 +27,7 @@
         <el-menu-item index="3-2-1" @click="addPrimitive('custom-color')">纯色纹理</el-menu-item>
         <el-menu-item index="3-2-2" @click="addPrimitive('custom-img')">图片纹理</el-menu-item>
       </el-submenu>
-      <el-menu-item index="3-3">材质</el-menu-item>
+      <el-menu-item index="3-3" @click="addPrimitive('custom-water')">水面</el-menu-item>
     </el-submenu>
   </el-menu>
 </template>
@@ -99,6 +99,9 @@ export default Vue.extend({
             break;
             case "custom-img":
             primitiveLoader.customMaterial();
+            break;
+            case "custom-water":
+            primitiveLoader.customWater();
             break;
       }
     }
