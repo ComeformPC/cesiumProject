@@ -2,7 +2,7 @@ import { Viewer, GeometryInstance, BoxGeometry, Cartesian3, VertexFormat, Appear
 
 /**
  * 添加primitive图元
- * 
+ * @module ls/AddPrimitive
  */
 class AddPrimitive {
     constructor(viewer: Viewer) {
@@ -363,8 +363,8 @@ class AddPrimitive {
         const vertices = new Float64Array([//顶点坐标
             -2000, -2000, 0,
             2000, -2000, 0,
-            2000, 2000, 1000,
-            -2000, 2000, 1000
+            2000, 2000, 0,
+            -2000, 2000, 0
         ]);
         const st = new Float32Array([//纹理坐标
             0.0, 0.0,
@@ -391,44 +391,89 @@ class AddPrimitive {
             componentsPerAttribute: 2,
             values: st
         })
-        //自定义几何图形时，使用图片纹理，需要自己设置st,normal属性
+        //使用水面着色器时，使用图片纹理，需要自己设置st,position属性。
+        //normal会在片元着色器中计算。为原点到顶点坐标矢量方向
         const rect = new Geometry({
             attributes: attributes,
             primitiveType: PrimitiveType.TRIANGLES,
             indices: indices,
             boundingSphere: BoundingSphere.fromVertices(vertices as any)
         });
-        GeometryPipeline.computeNormal(rect);
         const instance = new GeometryInstance({
             geometry: rect,
             modelMatrix: mat4,
             id: 'rect'
         })
+        //实质就是使用EllipsoidSurfaceAppearance的顶点着色器和片元着色器
         const primitive = new Primitive({
-            geometryInstances: new GeometryInstance({
-                geometry: new RectangleGeometry({
-                    rectangle: Rectangle.fromDegrees(
-                        -95.0,
-                        40.0,
-                        -90.0,
-                        45.0
-                    ),
-                    vertexFormat: EllipsoidSurfaceAppearance.VERTEX_FORMAT,
-                })
-            }),
-            appearance: new EllipsoidSurfaceAppearance({
-                aboveGround: false,
+            geometryInstances: [instance],
+            asynchronous: false,
+            appearance: new MaterialAppearance({
                 material: new Material({
                     fabric: {
                         type: 'Water',
                         uniforms: {
                             normalMap: buildModuleUrl("Assets/Textures/waterNormals.jpg"),
-                            frequency: 100.0,
+                            frequency: 1000.0,
                             animationSpeed: 0.01,
                             amplitude: 1.0,
                         }
                     }
                 }),
+                vertexShaderSource: "attribute vec3 position3DHigh;\n\
+                attribute vec3 position3DLow;\n\
+                attribute vec2 st;\n\
+                attribute float batchId;\n\
+                \n\
+                varying vec3 v_positionMC;\n\
+                varying vec3 v_positionEC;\n\
+                varying vec2 v_st;\n\
+                \n\
+                void main()\n\
+                {\n\
+                    vec4 p = czm_computePosition();\n\
+                \n\
+                    v_positionMC = position3DHigh + position3DLow;           // position in model coordinates\n\
+                    v_positionEC = (czm_modelViewRelativeToEye * p).xyz;     // position in eye coordinates\n\
+                    v_st = st;\n\
+                \n\
+                    gl_Position = czm_modelViewProjectionRelativeToEye * p;\n\
+                }\n\
+                ",
+                fragmentShaderSource: "varying vec3 v_positionMC;\n\
+                varying vec3 v_positionEC;\n\
+                varying vec2 v_st;\n\
+                \n\
+                void main()\n\
+                {\n\
+                    czm_materialInput materialInput;\n\
+                \n\
+                    vec3 normalEC = normalize(czm_normal3D * czm_geodeticSurfaceNormal(v_positionMC, vec3(0.0), vec3(1.0)));\n\
+                #ifdef FACE_FORWARD\n\
+                    normalEC = faceforward(normalEC, vec3(0.0, 0.0, 1.0), -normalEC);\n\
+                #endif\n\
+                \n\
+                    materialInput.s = v_st.s;\n\
+                    materialInput.st = v_st;\n\
+                    materialInput.str = vec3(v_st, 0.0);\n\
+                \n\
+                    // Convert tangent space material normal to eye space\n\
+                    materialInput.normalEC = normalEC;\n\
+                    materialInput.tangentToEyeMatrix = czm_eastNorthUpToEyeCoordinates(v_positionMC, materialInput.normalEC);\n\
+                \n\
+                    // Convert view vector to world space\n\
+                    vec3 positionToEyeEC = -v_positionEC;\n\
+                    materialInput.positionToEyeEC = positionToEyeEC;\n\
+                \n\
+                    czm_material material = czm_getMaterial(materialInput);\n\
+                \n\
+                #ifdef FLAT\n\
+                    gl_FragColor = vec4(material.diffuse + material.emission, material.alpha);\n\
+                #else\n\
+                    gl_FragColor = czm_phong(normalize(positionToEyeEC), material, czm_lightDirectionEC);\n\
+                #endif\n\
+                }\n\
+                "
             })
         });
         scene.primitives.add(primitive);
@@ -438,6 +483,108 @@ class AddPrimitive {
                 heading: 0,
                 pitch: Math.toRadians(-90),
                 roll: 0
+            }
+        })
+    }
+    /**
+     * 在box图元中添加水面贴图
+     * 
+     */
+    customWaterWithBox() {
+        const coor = Cartographic.fromDegrees(-95.0, 40.0, 1000.0);//定义模型世界坐标系中位置)
+        const origin = Cartographic.toCartesian(coor);
+        const mat4 = this.modelMat4();
+        const boxGeo = new BoxGeometry({//box顶点坐标信息及st贴图坐标信息（模型坐标系）
+            minimum: new Cartesian3(-500, -500, 0),
+            maximum: new Cartesian3(500, 500, 500),
+            vertexFormat: VertexFormat.POSITION_AND_ST
+        });
+        const instance = new GeometryInstance({//box实例（世界坐标系）
+            geometry: boxGeo,
+            modelMatrix: mat4,
+            id: 'waterbox'
+        });
+        const appearance = new MaterialAppearance({//box实例贴图
+            flat:false,//是否考虑光源,true表示不考虑光源，false表示考虑光源，并使用phong算法
+            materialSupport: MaterialAppearance.MaterialSupport.TEXTURED,
+            material: new Material({
+                fabric: {
+                    type: 'Water',
+                    uniforms: {
+                        normalMap: buildModuleUrl("Assets/Textures/waterNormals.jpg"),
+                        frequency: 100.0,
+                        animationSpeed: 0.01,
+                        amplitude: 1.0
+                    }
+                }
+            }),
+            vertexShaderSource: "attribute vec3 position3DHigh;\n\
+            attribute vec3 position3DLow;\n\
+            attribute vec2 st;\n\
+            attribute float batchId;\n\
+            \n\
+            varying vec3 v_positionMC;\n\
+            varying vec3 v_positionEC;\n\
+            varying vec2 v_st;\n\
+            \n\
+            void main()\n\
+            {\n\
+                vec4 p = czm_computePosition();\n\
+            \n\
+                v_positionMC = position3DHigh + position3DLow;           // position in model coordinates\n\
+                v_positionEC = (czm_modelViewRelativeToEye * p).xyz;     // position in eye coordinates\n\
+                v_st = st;\n\
+            \n\
+                gl_Position = czm_modelViewProjectionRelativeToEye * p;\n\
+            }\n\
+            ",
+            fragmentShaderSource: "varying vec3 v_positionMC;\n\
+                varying vec3 v_positionEC;\n\
+                varying vec2 v_st;\n\
+                \n\
+                void main()\n\
+                {\n\
+                    czm_materialInput materialInput;\n\
+                \n\
+                    vec3 normalEC = normalize(czm_normal3D * czm_geodeticSurfaceNormal(v_positionMC, vec3(0.0), vec3(1.0)));\n\
+                #ifdef FACE_FORWARD\n\
+                    normalEC = faceforward(normalEC, vec3(0.0, 0.0, 1.0), -normalEC);\n\
+                #endif\n\
+                \n\
+                    materialInput.s = v_st.s;\n\
+                    materialInput.st = v_st;\n\
+                    materialInput.str = vec3(v_st, 0.0);\n\
+                \n\
+                    // Convert tangent space material normal to eye space\n\
+                    materialInput.normalEC = normalEC;\n\
+                    materialInput.tangentToEyeMatrix = czm_eastNorthUpToEyeCoordinates(v_positionMC, materialInput.normalEC);\n\
+                \n\
+                    // Convert view vector to world space\n\
+                    vec3 positionToEyeEC = -v_positionEC;\n\
+                    materialInput.positionToEyeEC = positionToEyeEC;\n\
+                \n\
+                    czm_material material = czm_getMaterial(materialInput);\n\
+                \n\
+                #ifdef FLAT\n\
+                    gl_FragColor = vec4(material.diffuse + material.emission, material.alpha);\n\
+                #else\n\
+                    gl_FragColor = czm_phong(normalize(positionToEyeEC), material, czm_lightDirectionEC);\n\
+                #endif\n\
+                }\n\
+                "
+        })
+        const primitive=new Primitive({
+            geometryInstances:[instance],
+            appearance:appearance,
+            asynchronous:false
+        })
+        this.viewer.scene.primitives.add(primitive);
+        this.viewer.camera.flyTo({
+            destination:origin,
+            orientation:{
+                heading:0,
+                pitch:Math.toRadians(-90),
+                roll:0
             }
         })
     }
