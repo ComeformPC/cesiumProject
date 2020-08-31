@@ -1,4 +1,4 @@
-import { Viewer, GeometryInstance, BoxGeometry, Cartesian3, VertexFormat, Appearance, PerInstanceColorAppearance, ColorGeometryInstanceAttribute, Color, Primitive, Transforms, Cartographic, HeadingPitchRoll, HeadingPitchRange, Math, GeometryAttributes, GeometryAttribute, ComponentDatatype, Geometry, PrimitiveType, BoundingSphere, BlendingState, Matrix4, MaterialAppearance, Material, GeometryPipeline, buildModuleUrl, RectangleGeometry, Rectangle, EllipsoidSurfaceAppearance } from "cesium";
+import { Viewer, GeometryInstance, BoxGeometry, Cartesian3, VertexFormat, Appearance, PerInstanceColorAppearance, ColorGeometryInstanceAttribute, Color, Primitive, Transforms, Cartographic, HeadingPitchRoll, HeadingPitchRange, Math as CesiumMath, GeometryAttributes, GeometryAttribute, ComponentDatatype, Geometry, PrimitiveType, BoundingSphere, BlendingState, Matrix4, MaterialAppearance, Material, GeometryPipeline, buildModuleUrl, RectangleGeometry, Rectangle, EllipsoidSurfaceAppearance, Cartesian2, Cesium3DTileset, Entity } from "cesium";
 
 /**
  * 添加primitive图元
@@ -64,7 +64,7 @@ class AddPrimitive {
             destination: origin,
             orientation: {
                 heading: 0,
-                pitch: Math.toRadians(-90),
+                pitch: CesiumMath.toRadians(-90),
                 roll: 0
             }
         })
@@ -164,7 +164,7 @@ class AddPrimitive {
             destination: origin,
             orientation: {
                 heading: 0,
-                pitch: Math.toRadians(-90),
+                pitch: CesiumMath.toRadians(-90),
                 roll: 0
             }
         })
@@ -289,14 +289,17 @@ class AddPrimitive {
                         source: `
                         czm_material czm_getMaterial(czm_materialInput materialInput)\n
                         {\n
-                            vec3 red=vec3(1.0,0.0,0.0);
-                            czm_material material = czm_getDefaultMaterial(materialInput);\n
-                            if(materialInput.st.x<=speed){\n
-                                material.diffuse = czm_gammaCorrect(texture2D(image, fract(materialInput.st)).rgb *red);\n 
+                            float isRed=step(speed,materialInput.st.x);\n
+                            vec3 red;\n
+                            if(isRed==0.0){\n
+                                red=vec3(1.0,0.0,0.0);\n
                             }\n
                             else{\n
-                                material.diffuse = czm_gammaCorrect(texture2D(image, fract(materialInput.st)).rgb);\n 
+                                red=vec3(1.0,1.0,1.0);\n
                             }\n
+                            czm_material material = czm_getDefaultMaterial(materialInput);\n
+                            material.diffuse = czm_gammaCorrect(texture2D(image, fract(materialInput.st)).rgb *red);\n 
+                            
                             material.alpha = texture2D(image, fract(materialInput.st)).a;\n
                             return material;\n
                         }\n
@@ -313,7 +316,7 @@ class AddPrimitive {
             destination: origin,
             orientation: {
                 heading: 0,
-                pitch: Math.toRadians(-90),
+                pitch: CesiumMath.toRadians(-90),
                 roll: 0
             }
         })
@@ -325,29 +328,7 @@ class AddPrimitive {
                 clearInterval(setIntervalID);
                 speed = 0.0
             }
-            primitive.appearance.material = new Material({
-                fabric: {
-                    uniforms: {
-                        image: './images/Cesium_Logo_Color.jpg',
-                        speed: speed
-                    },
-                    source: `
-                        czm_material czm_getMaterial(czm_materialInput materialInput)\n
-                        {\n
-                            vec3 red=vec3(1.0,0.0,0.0);\n
-                            czm_material material = czm_getDefaultMaterial(materialInput);\n
-                            if(materialInput.st.x<=speed){\n //纹理X坐标小于speed添加红色
-                                material.diffuse = czm_gammaCorrect(texture2D(image, fract(materialInput.st)).rgb *red);\n 
-                            }\n
-                            else{\n
-                                material.diffuse = czm_gammaCorrect(texture2D(image, fract(materialInput.st)).rgb);\n 
-                            }\n
-                            material.alpha = texture2D(image, fract(materialInput.st)).a;\n
-                            return material;\n
-                        }\n
-                        `
-                }
-            })
+            primitive.appearance.material.uniforms.speed = speed;
         }, 500)
     }
     /**
@@ -481,7 +462,7 @@ class AddPrimitive {
             destination: origin,
             orientation: {
                 heading: 0,
-                pitch: Math.toRadians(-90),
+                pitch: CesiumMath.toRadians(-90),
                 roll: 0
             }
         })
@@ -505,7 +486,7 @@ class AddPrimitive {
             id: 'waterbox'
         });
         const appearance = new MaterialAppearance({//box实例贴图
-            flat:false,//是否考虑光源,true表示不考虑光源，false表示考虑光源，并使用phong算法
+            flat: false,//是否考虑光源,true表示不考虑光源，false表示考虑光源，并使用phong算法
             materialSupport: MaterialAppearance.MaterialSupport.TEXTURED,
             material: new Material({
                 fabric: {
@@ -573,20 +554,144 @@ class AddPrimitive {
                 }\n\
                 "
         })
-        const primitive=new Primitive({
-            geometryInstances:[instance],
-            appearance:appearance,
-            asynchronous:false
+        const primitive = new Primitive({
+            geometryInstances: [instance],
+            appearance: appearance,
+            asynchronous: false
         })
         this.viewer.scene.primitives.add(primitive);
         this.viewer.camera.flyTo({
-            destination:origin,
-            orientation:{
-                heading:0,
-                pitch:Math.toRadians(-90),
-                roll:0
+            destination: origin,
+            orientation: {
+                heading: 0,
+                pitch: CesiumMath.toRadians(-90),
+                roll: 0
             }
         })
+    }
+    /**
+     * 该方法结合bookofshaders的造型函数章节
+     * {@link https://thebookofshaders.com/05/}
+     */
+    bookofshaderWithShapefunc() {
+        const viewer = this.viewer;
+        const scene = this.viewer.scene;
+        const coor = Cartographic.fromDegrees(-95.0, 40.0, 10000.0);//定义模型世界坐标系中位置)
+        const origin = Cartographic.toCartesian(coor);
+        const mat4 = this.modelMat4();
+        const vertices = new Float64Array([//顶点坐标
+            -2000, -2000, 0,
+            2000, -2000, 0,
+            2000, 2000, 0,
+            -2000, 2000, 0
+        ]);
+        const attributes = new GeometryAttributes();
+        const indices = new Uint16Array(6);//顶点索引
+        indices[0] = 0;
+        indices[1] = 1;
+        indices[2] = 2;
+        indices[3] = 0;
+        indices[4] = 2;
+        indices[5] = 3;
+        attributes.position = new GeometryAttribute({//顶点attributes
+            componentDatatype: ComponentDatatype.DOUBLE,
+            componentsPerAttribute: 3,
+            values: vertices
+        });
+
+        const rect = new Geometry({
+            attributes: attributes,
+            primitiveType: PrimitiveType.TRIANGLES,
+            indices: indices,
+            boundingSphere: BoundingSphere.fromVertices(vertices as any)
+        });
+        GeometryPipeline.computeNormal(rect);
+        const instance = new GeometryInstance({
+            geometry: rect,
+            modelMatrix: mat4,
+            id: 'rect'
+        })
+        const appearance = new MaterialAppearance({
+            materialSupport: MaterialAppearance.MaterialSupport.BASIC,
+            material: new Material({
+                fabric: {
+                    uniforms: {
+                        "u_ld":new Cartesian2(0.0,0.0),
+                        "u_resolution": new Cartesian2(scene.canvas.width, scene.canvas.height),
+                        "color": new Color(1.0, 0.0, 0.0, 1.0)
+                    },
+                    source: `
+                    float plotline(vec2 st,float pct){
+                        return smoothstep(pct-0.01,pct,st.y)-smoothstep(pct,pct+0.01,st.y);
+                    }
+                    czm_material czm_getMaterial(czm_materialInput materialInput)\n
+                    {\n
+                        czm_material material = czm_getDefaultMaterial(materialInput);\n
+                        vec2 isCon=gl_FragCoord.xy-u_ld;
+                            vec2 cood=gl_FragCoord.xy-u_ld;//gl_FragCoord仍然是viewer.canvas的坐标
+                            vec2 st=cood/u_resolution;
+                            vec3 green=vec3(0.0,1.0,0.0);
+                            float y=pow(st.x,5.0);
+                            float pct=plotline(st,y);
+                            material.diffuse =(1.0-pct)*color.xyz+pct*green;\n 
+                            
+                            material.alpha = 1.0;\n
+                            return material;\n
+                    }\n
+                    `
+                }
+            })
+        })
+        const primitive = scene.primitives.add(new Primitive({
+            geometryInstances: [instance],
+            appearance: appearance,
+            asynchronous: false,
+            compressVertices: false,
+            debugShowBoundingVolume: false
+        })) as Primitive;
+        this.viewer.camera.flyTo({
+            destination: origin,
+            orientation: {
+                heading: 0,
+                pitch: CesiumMath.toRadians(-90),
+                roll: 0
+            }
+        })
+        primitive.readyPromise.then(function () {
+            console.log(primitive);
+            const center = (primitive as any)._boundingSpheres[0].center;
+            const canvas=scene.canvas;
+            //左下
+            const leftdown = Matrix4.multiplyByPoint(mat4, new Cartesian3(-2000, -2000, 0), new Cartesian3());
+            const ldCanvas = scene.cartesianToCanvasCoordinates(leftdown);
+
+            //右下
+            const rightdown = Matrix4.multiplyByPoint(mat4, new Cartesian3(2000, -2000, 0), new Cartesian3());
+            const rdCanvas = scene.cartesianToCanvasCoordinates(rightdown);
+            //左上
+            const leftUp = Matrix4.multiplyByPoint(mat4, new Cartesian3(-2000, 2000, 0), new Cartesian3());
+            const luCanvas = scene.cartesianToCanvasCoordinates(leftUp);
+
+            //右上
+            const rightUp = Matrix4.multiplyByPoint(mat4, new Cartesian3(2000, 2000, 0), new Cartesian3());
+            const ruCanvas = scene.cartesianToCanvasCoordinates(rightUp);
+
+            const viewport=new Cartesian2(canvas.width,canvas.height);
+            scene.preUpdate.addEventListener(function(e){
+                const ldCanvas = scene.cartesianToCanvasCoordinates(leftdown);
+                const rdCanvas = scene.cartesianToCanvasCoordinates(rightdown);
+                const ruCanvas= scene.cartesianToCanvasCoordinates(rightUp);
+                //左上
+                const luCanvas = scene.cartesianToCanvasCoordinates(leftUp);
+                const resolution=new Cartesian2(Math.abs(ruCanvas.x-ldCanvas.x),Math.abs(ldCanvas.y-luCanvas.y));
+                //console.log({ ldCanvas, rdCanvas, luCanvas });
+                appearance.material.uniforms["color"]=Color.BLUE;
+                appearance.material.uniforms["u_resolution"]=resolution;
+                appearance.material.uniforms["u_ld"]=new Cartesian2(ldCanvas.x,viewport.y-ldCanvas.y);
+             })
+        })
+       
+
     }
 }
 export default AddPrimitive;

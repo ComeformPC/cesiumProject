@@ -12,6 +12,7 @@
         <template slot="title">glTF</template>
         <el-menu-item index="2-1-1" @click="addglTF('CesiumMan')">CesiumMan</el-menu-item>
         <el-menu-item index="2-1-2" @click="addglTF('Architecture')">建筑</el-menu-item>
+        <el-menu-item index="2-1-3" @click="addglTF('Ground')">地面</el-menu-item>
       </el-submenu>
       <el-submenu index="2-2">
         <template slot="title">3dTiles</template>
@@ -31,6 +32,10 @@
         <template slot="title">水面材质</template>
         <el-menu-item index="3-3-1" @click="addPrimitive('custom-water')">矩形</el-menu-item>
         <el-menu-item index="3-3-2" @click="addPrimitive('custom-water-box')">立方体</el-menu-item>
+      </el-submenu>
+       <el-submenu index="3-4">
+        <template slot="title">结合bookofshader</template>
+        <el-menu-item index="3-4-1" @click="addPrimitive('bookofshader-shapefunc')">造型函数</el-menu-item>
       </el-submenu>
     </el-submenu>
   </el-menu>
@@ -89,6 +94,9 @@ export default Vue.extend({
           case "Architecture":
           url="./data/model/chateau_de_montfa_81_gltf/origin/scene-origin.gltf";
           break;
+          case "Ground":
+          url="./data/tf/ground/ground.gltf";
+          break;
       }
       gltfLoader.add(url);
     },
@@ -109,6 +117,9 @@ export default Vue.extend({
             break;
             case "custom-water-box":
             primitiveLoader.customWaterWithBox();
+            break;
+            case "bookofshader-shapefunc":
+            primitiveLoader.bookofshaderWithShapefunc();
             break;
       }
     }
