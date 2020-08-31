@@ -618,22 +618,34 @@ class AddPrimitive {
                     uniforms: {
                         "u_ld":new Cartesian2(0.0,0.0),
                         "u_resolution": new Cartesian2(scene.canvas.width, scene.canvas.height),
+                        "u_time":0.0,
                         "color": new Color(1.0, 0.0, 0.0, 1.0)
                     },
                     source: `
+                    #define PI 3.14159265359
                     float plotline(vec2 st,float pct){
                         return smoothstep(pct-0.01,pct,st.y)-smoothstep(pct,pct+0.01,st.y);
                     }
+                    
+                    vec3 colorB=vec3(1.0,0.0,1.0);
                     czm_material czm_getMaterial(czm_materialInput materialInput)\n
                     {\n
                         czm_material material = czm_getDefaultMaterial(materialInput);\n
                         vec2 isCon=gl_FragCoord.xy-u_ld;
                             vec2 cood=gl_FragCoord.xy-u_ld;//gl_FragCoord仍然是viewer.canvas的坐标
                             vec2 st=cood/u_resolution;
-                            vec3 green=vec3(0.0,1.0,0.0);
-                            float y=pow(st.x,5.0);
-                            float pct=plotline(st,y);
-                            material.diffuse =(1.0-pct)*color.xyz+pct*green;\n 
+                            vec3 pct=vec3(0.0);
+                            
+                            pct.x=pow(st.x,5.0);
+                            pct.y=smoothstep(0.0,1.0,st.x);
+                            pct.z=sin((fract(u_time)+st.x)/2.0*PI);
+                            vec3 baseColor=color.xyz;
+                            float sin=abs(sin(u_time));
+                            vec3 mixColor=mix(baseColor,colorB,sin);
+                            mixColor=mix(mixColor,vec3(1.0,0.0,0.0),plotline(st,pct.x));
+                            mixColor=mix(mixColor,vec3(0.0,1.0,0.0),plotline(st,pct.y));
+                            mixColor=mix(mixColor,vec3(0.0,0.0,1.0),plotline(st,pct.z));
+                            material.diffuse =mixColor;\n 
                             
                             material.alpha = 1.0;\n
                             return material;\n
@@ -677,6 +689,7 @@ class AddPrimitive {
             const ruCanvas = scene.cartesianToCanvasCoordinates(rightUp);
 
             const viewport=new Cartesian2(canvas.width,canvas.height);
+            const startTime=new Date(Date.now()).getTime()/1000;
             scene.preUpdate.addEventListener(function(e){
                 const ldCanvas = scene.cartesianToCanvasCoordinates(leftdown);
                 const rdCanvas = scene.cartesianToCanvasCoordinates(rightdown);
@@ -685,9 +698,11 @@ class AddPrimitive {
                 const luCanvas = scene.cartesianToCanvasCoordinates(leftUp);
                 const resolution=new Cartesian2(Math.abs(ruCanvas.x-ldCanvas.x),Math.abs(ldCanvas.y-luCanvas.y));
                 //console.log({ ldCanvas, rdCanvas, luCanvas });
-                appearance.material.uniforms["color"]=Color.BLUE;
+                const timespan=new Date(Date.now()).getTime()/1000-startTime;
+                appearance.material.uniforms["color"]=Color.YELLOW;
                 appearance.material.uniforms["u_resolution"]=resolution;
                 appearance.material.uniforms["u_ld"]=new Cartesian2(ldCanvas.x,viewport.y-ldCanvas.y);
+                appearance.material.uniforms["u_time"]=timespan;
              })
         })
        

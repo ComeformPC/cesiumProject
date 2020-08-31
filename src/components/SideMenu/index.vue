@@ -35,7 +35,7 @@
       </el-submenu>
        <el-submenu index="3-4">
         <template slot="title">结合bookofshader</template>
-        <el-menu-item index="3-4-1" @click="addPrimitive('bookofshader-shapefunc')">造型函数</el-menu-item>
+        <el-menu-item index="3-4-1" @click="addPrimitive('bookofshader-shapefunc')">造型和颜色</el-menu-item>
       </el-submenu>
     </el-submenu>
   </el-menu>
